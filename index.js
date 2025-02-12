@@ -3,26 +3,21 @@ const axios = require('axios');
 const readline = require('readline-sync');
 const chalk = require('chalk');
 
-// Configuración centralizada
 const CONFIG = {
   API_KEY: process.env.API_KEY || null,
   BASE_API_URL: 'https://api.freecurrencyapi.com/v1/',
-  CACHE_TTL: 5 * 60 * 1000, // 5 minutos en milisegundos
+  CACHE_TTL: 5 * 60 * 1000,
   HISTORY_LIMIT: 50,
   DEFAULT_BASE_CURRENCY: 'USD'
 };
 
-// Validación temprana de configuración
 if (!CONFIG.API_KEY) {
   console.error(chalk.red('❌ ERROR: API_KEY no configurada en variables de entorno'));
-
-  // 🔹 Evitar que process.exit(1) afecte Jest
   if (process.env.JEST_WORKER_ID === undefined) {
     process.exit(1);
   }
 }
 
-// Estado de la aplicación
 const appState = {
   exchangeRates: {},
   lastUpdated: null,
@@ -31,7 +26,6 @@ const appState = {
   availableCurrencies: []
 };
 
-// Utilidades de logging
 const logger = {
   error: (message) => console.error(chalk.red(`❌ ${message}`)),
   success: (message) => console.log(chalk.green(`✔ ${message}`)),
@@ -39,7 +33,6 @@ const logger = {
   warning: (message) => console.log(chalk.yellow(`⚠ ${message}`)),
 };
 
-// Manejo de la API
 const apiClient = axios.create({
   baseURL: CONFIG.BASE_API_URL,
   timeout: 5000,
@@ -57,7 +50,6 @@ async function fetchExchangeRates(baseCurrency = CONFIG.DEFAULT_BASE_CURRENCY) {
     appState.lastUpdated = Date.now();
     logger.success('Tasas de cambio actualizadas correctamente');
 
-    // Actualizar lista de monedas disponibles
     if (appState.availableCurrencies.length === 0) {
       const currenciesResponse = await apiClient.get('currencies');
       appState.availableCurrencies = Object.keys(currenciesResponse.data.data);
@@ -110,17 +102,15 @@ function addToHistory(entry) {
   });
 }
 
-// Exportar funciones para Jest
 module.exports = {
   convertCurrency,
   isValidCurrency,
   fetchExchangeRates,
   appState,
-  isCacheExpired,  // 🔹 Agregamos esta función
+  isCacheExpired,
   addToHistory
 };
 
-// Inicialización de la aplicación
 if (require.main === module) {
   (async () => {
     try {
@@ -137,7 +127,6 @@ if (require.main === module) {
     } catch (error) {
       logger.error(`Error crítico: ${error.message}`);
 
-      // 🔹 Evitar que process.exit(1) afecte Jest
       if (process.env.JEST_WORKER_ID === undefined) {
         process.exit(1);
       }

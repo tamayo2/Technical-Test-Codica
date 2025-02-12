@@ -1,6 +1,5 @@
 const { convertCurrency, isValidCurrency, fetchExchangeRates, appState, isCacheExpired, addToHistory } = require('./index');
 
-// Mock de console.log y console.error para evitar errores en Jest
 beforeAll(() => {
   global.console = {
     log: jest.fn(),
@@ -9,13 +8,12 @@ beforeAll(() => {
     info: jest.fn()
   };
 
-  // Mock de process.exit para que Jest no termine inesperadamente
   jest.spyOn(process, 'exit').mockImplementation(() => {});
 });
 
 describe('Pruebas del Convertidor de Monedas', () => {
   beforeAll(() => {
-    // Simula la obtención de tasas de cambio antes de las pruebas
+    // En este test se simula la obtencion de tasas de cambio antes de las pruebas
     appState.exchangeRates = {
       USD: 1,
       EUR: 0.85,
@@ -35,28 +33,27 @@ describe('Pruebas del Convertidor de Monedas', () => {
     expect(result).toBeCloseTo(100, 2);
   });
 
-  test('Devuelve null si una moneda no es válida', () => {
+  test('Devolver null si una moneda no es valida', () => {
     expect(convertCurrency(100, 'XYZ', 'USD')).toBeNull();
   });
 
-  test('Verifica que una moneda es válida', () => {
+  test('Verificar que una moneda es valida', () => {
     expect(isValidCurrency('USD')).toBe(true);
     expect(isValidCurrency('EUR')).toBe(true);
     expect(isValidCurrency('XYZ')).toBe(false);
   });
 
-  test('Detecta si la caché está expirada', () => {
-    // Simula un estado en el que la caché sigue válida
+  test('Detectar si la cache esta expirada', () => {
+    // En este test simulo un estado en el que la cache sigue valida
     appState.lastUpdated = Date.now();
     expect(isCacheExpired()).toBe(false);
 
-    // Simula un estado en el que la caché ya expiró
-    appState.lastUpdated = Date.now() - (10 * 60 * 1000); // Hace 10 minutos
+    // Aqui se simula un estado en el que la cache ya expiro
+    appState.lastUpdated = Date.now() - (10 * 60 * 1000);
     expect(isCacheExpired()).toBe(true);
   });
 
-  test('Agrega elementos al historial de conversiones', () => {
-    // Simulamos una entrada de conversión
+  test('Se agregan correctamente elementos al historial de conversiones', () => {
     const conversionEntry = {
       amount: 100,
       from: 'USD',
@@ -70,13 +67,12 @@ describe('Pruebas del Convertidor de Monedas', () => {
     expect(appState.history[0]).toMatchObject(conversionEntry);
   });
 
-  test('El historial mantiene el límite de conversiones', () => {
-    // Agregamos múltiples entradas para probar el límite
+  test('El historial mantiene el limite de conversiones', () => {
     appState.history = [];
     for (let i = 0; i < 55; i++) {
       addToHistory({ amount: i, from: 'USD', to: 'EUR', result: i * 0.85 });
     }
 
-    expect(appState.history.length).toBeLessThanOrEqual(50); // HISTORY_LIMIT
+    expect(appState.history.length).toBeLessThanOrEqual(50);
   });
 });
