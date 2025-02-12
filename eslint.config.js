@@ -6,7 +6,7 @@ module.exports = [
     files: ['**/*.js'],
     languageOptions: {
       sourceType: 'commonjs',
-      globals: { ...globals.node, ...globals.jest } // ⬅️ Agregar soporte para Jest
+      globals: { ...globals.node, ...globals.jest }
     },
     rules: {
       'camelcase': 'error',
@@ -15,7 +15,7 @@ module.exports = [
       'semi': ['error', 'always'],
       'indent': ['error', 2],
       'eqeqeq': 'error',
-      'no-unused-vars': 'warn' // ⬅️ Cambiar de "error" a "warn" para evitar romper la ejecución por variables sin usar
+      'no-unused-vars': 'warn'
     }
   },
   pluginJs.configs.recommended
