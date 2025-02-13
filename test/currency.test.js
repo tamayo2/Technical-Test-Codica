@@ -1,4 +1,4 @@
-const { convertCurrency, isValidCurrency, fetchExchangeRates, appState, isCacheExpired, addToHistory } = require('./index');
+const { convertCurrency, isValidCurrency, fetchExchangeRates, appState, isCacheExpired, addToHistory } = require('../src');
 
 beforeAll(() => {
   global.console = {
