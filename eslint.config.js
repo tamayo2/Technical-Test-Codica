@@ -9,6 +9,7 @@ module.exports = [
       globals: { ...globals.node, ...globals.jest }
     },
     rules: {
+      'no-unused-expressions': 'off',
       'camelcase': 'error',
       'no-console': 'off',
       'quotes': ['error', 'single'],

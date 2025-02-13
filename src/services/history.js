@@ -1,12 +1,15 @@
 import { CONFIG } from '../config/config.js';
-import { appState } from '../state/appState.js';
 
-export function addToHistory(entry) {
-    if (appState.history.length >= CONFIG.HISTORY_LIMIT) {
-        appState.history.shift();
+export function addToHistory(history, entry) {
+    const newHistory = [...history];
+
+    if (newHistory.length >= CONFIG.HISTORY_LIMIT) {
+        newHistory.shift();
     }
-    appState.history.push({
+    newHistory.push({
         ...entry,
         timestamp: new Date().toISOString()
     });
+
+    return newHistory;
 }

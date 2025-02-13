@@ -1,61 +1,58 @@
 import { apiClient } from '../api/apiClient.js';
-import { appState } from '../state/appState.js';
 import { logger } from '../logger/logger.js';
 import { handleApiError } from '../utils/errorHandler.js';
-import { isCacheExpired, isValidCurrency } from '../utils/validation.js';
-import { CONFIG } from '../config/config.js';
+import { isCacheExpired } from '../utils/validation.js';
 import { addToHistory } from './history.js';
 
-async function loadAvailableCurrencies() {
+export async function getExchangeRates(baseCurrency) {
     try {
-        const response = await apiClient.get('currencies');
-        appState.availableCurrencies = Object.keys(response.data.data);
+        const response = await apiClient.get('latest', { params: { base_currency: baseCurrency } });
+        return response.data.data;
     } catch (error) {
-        handleApiError(error, 'Error cargando monedas disponibles');
+        throw new Error(handleApiError(error, 'Error obteniendo tasas de cambio'));
     }
 }
 
-export async function fetchExchangeRates(baseCurrency = CONFIG.DEFAULT_BASE_CURRENCY) {
+export async function getAvailableCurrencies() {
     try {
-        const response = await apiClient.get('latest', {
-            params: { base_currency: baseCurrency }
-        });
+        const response = await apiClient.get('currencies');
+        return Object.keys(response.data.data);
+    } catch (error) {
+        throw new Error(handleApiError(error, 'Error cargando monedas disponibles'));
+    }
+}
 
-        appState.exchangeRates = response.data.data;
-        appState.baseCurrency = baseCurrency;
+export async function updateExchangeRates(appState) {
+    try {
+        appState.exchangeRates = await getExchangeRates(appState.baseCurrency);
         appState.lastUpdated = Date.now();
 
         if (appState.availableCurrencies.length === 0) {
-            await loadAvailableCurrencies();
+            appState.availableCurrencies = await getAvailableCurrencies();
         }
 
         logger.success('Tasas de cambio actualizadas correctamente');
     } catch (error) {
-        handleApiError(error, 'Error obteniendo tasas de cambio');
+        throw new Error(handleApiError(error, 'Error actualizando tasas de cambio'));
     }
 }
 
-export async function convertCurrency(amount, from, to) {
+export function convertCurrency(amount, from, to, exchangeRates) {
+    if (!exchangeRates[from] || !exchangeRates[to]) {
+        throw new Error('Moneda(s) no valida(s)');
+    }
+    return (amount / exchangeRates[from]) * exchangeRates[to];
+}
+
+export async function performConversion(amount, from, to, appState) {
     try {
-        if (!isValidCurrency(from) || !isValidCurrency(to)) {
-            logger.error('Moneda(s) no valida(s)');
-            return null;
+        if (isCacheExpired(appState.lastUpdated)) { // Usar isCacheExpired
+            logger.warning('Las tasas están desactualizadas, actualizando...');
+            await updateExchangeRates(appState);
         }
 
-        if (isCacheExpired()) {
-            logger.warning('Las tasas estan desactualizadas, actualizando...');
-            await fetchExchangeRates(appState.baseCurrency);
-        }
-
-        const convertedAmount = (amount / appState.exchangeRates[from]) * appState.exchangeRates[to];
-        const result = parseFloat(convertedAmount.toFixed(4));
-
-        addToHistory({
-            amount,
-            from,
-            to,
-            result
-        });
+        const result = convertCurrency(amount, from, to, appState.exchangeRates);
+        appState.history = addToHistory(appState.history, { amount, from, to, result });
 
         return result;
     } catch (error) {
