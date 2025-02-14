@@ -46,7 +46,7 @@ export function convertCurrency(amount, from, to, exchangeRates) {
 
 export async function performConversion(amount, from, to, appState) {
     try {
-        if (isCacheExpired(appState.lastUpdated)) { // Usar isCacheExpired
+        if (isCacheExpired(appState.lastUpdated)) {
             logger.warning('Las tasas están desactualizadas, actualizando...');
             await updateExchangeRates(appState);
         }
